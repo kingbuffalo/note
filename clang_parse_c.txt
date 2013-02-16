@@ -1,15 +1,17 @@
-How to parse C programs with clang: A tutorial in 9 parts
-Introduction
-From clang’s website:
-The goal of the Clang project is to create a new C, C++, Objective C and Objective C++ front-end for theLLVM compiler.
-What does that mean, and why should you care? A front-end is a program that takes a piece of code and converts it from a flat string to a structured, tree-formed representation of the same program — an AST.
-Once you have an AST of a program, you can do many things with the program that are hard without an AST. For example, renaming a variable without an AST is hard: You cannot simply search for the old name and replace it with a new name, as this will change too much (for example, variables that have the old name but are in a different namespace, and so on). With an AST, it’s easy: In principle, you only have to change thename field of the right VariableDeclaration AST node, and convert the AST back to a string. (In practice, it’s a bit harder for some codebases).
-Front-ends have existed for decades. So, what’s special about clang? I think the most interesting part is that clang uses a library design, which means that youc an easily embed clang into your own programs (and by “easily”, I mean it. Most programs in this tutorial are well below 50 lines). This tutorial tells you how you do this.
-So, do you have a large C code-base and want to create automated non-trivial refactorings? Would you like to have a ctags that works better with C++ and at all with Objective-C? Would you like to collect some statistics about your program, and you feel that grep doesn’t cut it? Then clang is for you.
-This tutorial will offer a tour through clang’s preprocessor, parser, and AST libraries. As example, we will write a program that collects a list of all globals defined and used in a program. For these input files, thisoutput will be generated. The final program is close to production quality: It is for example able to process the source code of vim — the resulting html file is 2.4 mb! (vim uses lots of globals.) Furthermore, the program can be used with any make-based program out of the box — no change to Makefiles or input file lists required.
-A short word of warning: clang is still work in prograss. C++-support is not yet anywhere near completion, and clang does not have a stable API, so this tutorial might not be completely up-to-date. The last time I checked that all programs work was Sep 28, 2008.
-Clang works on all platforms. In this tutorial I assume that you have some Unix-based platform, but in principle everything should work on Windows, too.
-Getting started
+如何解析c程序 （一个分为9章的教程)
+预览
+从 clang的官方网站上说：
+clang 是一个 c,c++ obj-c 语言的llvm编译器的前端。
+这意味着什么呢，clang 是一个将字符串的源代码转换成一个相同功能（源代码程序功能）树结构的代码：抽象语法树。
+在没有语法树的时候，你要xxoo的时候比较困难。例如，重命一个变量名是非常困难的：因为你不能通过简单的寻找旧的名字然后再将其replace成一个新名字。如果你那样做的话，会改变太多了。（例如：在不同的命名空间上有相同的名字，==）。但如果你有语法树，世界是多么地美妙：理论上你只要改变声明变量那个节点（在语法树上的结点）上，然后再将语法树转换成字符串就可以了。（当然，在一些代码库里会比较困难。
+编译器前端存在有x个十年了。clang有何特别之处呢？按我来说，最有趣的就是clang是使用了模块化设计，这意味着你将很容易将clang崁入到你的代码中（还是你的代码放进clang中啊？？？？）（当然，我所指的简单是指：以下的使用例子都是一些不超过50行的代码（这些代码会告诉你如何将你的代码跟clang合体）
+你是否有一大堆c代码并想(无需关注细节)自动化重构它？你是否希望ctags能更好地处理c++ obj_c=代码？你是否统计你的代码（觉得grep不够用）？那么恭喜你，clang可以帮到你。
+本教程将会介绍预编译，解析和AST的库。举个例子：我们提供了一个收集全局定义（并如何使用这些收集到的全局定义）程序：提供输入文件，会生成输出文件。最后这个程序（估计是所有的例子程序完成后合成的）会提供一个例子：将vim源码作为输入文件，产生2.4m的html文件（vim源码使用了大量的全局定义）更为NB的是，这个程序是“开箱即用”：不需要修改源代码和makefile文件。
+温馨提示一下：你看这个文章有可能已经过时了。原因：一，clang还在不停地开发中，它连静态文态都没有（现在所有文档都是doxgen根据代码和注释生成的？？）二，完全支持所有c++特性的编译器现在还没有，同样clang也不是。三、我写下此教程的所用的clang是2008.9.28check出来的。
+clang 在所有平台都能使用。在这个教程中，我假拟你是Unix-base的平台。当然，从理论上来讲，所有程序在Windows平台下也是能够运行的。
+开始
+
+_____start___________从下开始是教你如何安装的，不翻译了吧。。。。
 There is no official release of clang yet, you have to get it from SVN and build it for yourself. Luckily, this is easy:
 svn co http://llvm.org/svn/llvm-project/llvm/trunk llvm
 cd llvm
@@ -24,9 +26,12 @@ If you call ./configure without graphviz in your PATH, that’s fine too. You’
 Note that this does a debug build of llvm and clang. The resulting libraries and binaries will end up inllvm/Debug and are a lot slower than the release binaries (which you get when running ./configure --enable-optimized).
 You can find more information in clang’s official getting started guide. By the way, if you’re using Time Machine, you probably want to emit the llvm folder from your backup — else, 700mb get backed up every time you update and recompile llvm and clang.
 XXX: Browse clang source.
-Tutorial 01: The bare minimum
-A front-end consists of multiple parts. First is usually a lexer, which converts the input from a stream of characters to a stream of tokens. For example, the input while is converted from the five characters ‘w’, ‘h’, ‘i’, ‘l’, and ‘e’ to the token kw_while. For performance reasons, clang does not have a separate preprocessor program, but does preprocessing while lexing.
+_____end___________从上开始是教你如何安装的，不翻译了吧。。。。
+
+一，最低限度。（昵玛，什么翻译!!）
+一个前端由好ji个部分组成。首先介绍的是lexer(词法分析器。。）是将字符串转换成token流。例如，将while转换成token kw_while。由于性能的原因，clang没有独立的预编译器，这个工作（预编译所做的工作。。）在词法分析时做了。
 The Preprocessor class is the main interface to the lexer, and it’s a class you will need in almost every program that embeds clang. So, for starters, let’s try to create Preprocessor object. Our first program will not do anything useful, it only constructs a Preprocessor and exits again.
+
 The constructor of Preprocessor takes no less than 5 arguments: A Diagnostic object, a LangOptions object, a TargetInfo object, a SourceManager object, and finally a HeaderSearch object. Let’s break down what those objects are good for, and how we can build them.
 First is Diagnostic. This is used by clang to report errors and warnings to the user. A Diagnostic object can have a DiagnosticClient, which is responsible for actually displaying the messages to the user. We will use clang’s built-in TextDiagnostics class, which writes errors and warnings to the console (it’s the sameDiagnosticClient that is used by the clang binary).
 Next up is LangOptions. This class lets you configure if you’re compiling C or C++, and which language extensions you want to allow. Constructing this object is easy, as its constructor does not take any parameters.
