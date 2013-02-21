@@ -64,12 +64,11 @@ g++ `/Users/$USER/src/llvm/Debug/bin/llvm-config --ldflags` \
     "typeinfo for clang::DiagnosticClient", referenced from:
         typeinfo for DummyDiagnosticClientin tut01_pp.o
   ld: symbol(s) not found 
-Also note that you need to link quite a lot of libraries. Both clang and LLVM have fine-grained libraries, so that you can link in just what you need.
-So, that’s it for part 1! Now you can run your first shiny, clang-powered program:
-./tut01 
-Sure enough, it doesn’t do anything yet. Let’s tackle this next.
-Tutorial 02: Processing a file
-Right now, out program is not very interesting, as it does not do anything yet. We want to change it so that it feeds C files into the preprocessor object. To add an input file to the preprocessor, we call:
+另外请注意，你可能需要很多的库链接，clang和llvm都有设计很好的细粒化的库，所以你可以只链接你所需要的库。
+第一部分讲完了，现在你可以运行你第一个超NB的，基于clang的程序了：./tut01
+当然，这个程序并没有做任何事情。欲知后事如何，请听下回分解。
+第二部分：预编译一个文件。
+现在我们的程序还没有什么意思，这是因为这个程序并没有做任何的事情。现在我们对这个程序做一些修改，使其将c代码文件变成一个预编译对象。将一个文件加入到preprocessor上，我们使用以下语句：
 const FileEntry* file = fm.getFile("filename.c");
 sm.createMainFileID(file, SourceLocation());
 pp.EnterMainSourceFile(); 
