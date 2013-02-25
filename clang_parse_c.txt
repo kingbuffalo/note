@@ -72,8 +72,8 @@ g++ `/Users/$USER/src/llvm/Debug/bin/llvm-config --ldflags` \
 const FileEntry* file = fm.getFile("filename.c");
 sm.createMainFileID(file, SourceLocation());
 pp.EnterMainSourceFile(); 
-This creates a file id for the input file and stores it as the “main file” in the SourceManager object. The second line tells the preprocessor to enter the SourceManager’s main file into its file list; the call does some other setup stuff (such as creating a buffer with predefines), too.
-Now that a source file is added, we can ask the preprocessor to preprocess it and read the preprocessed input tokens:
+上述语句，创建了一个file实例来表示输入文件的。并将其存储在SourceManager对象的main file。第二行语句是告诉preprocessor将SourceManager的主文件放到文件列表。这条语句还进行了其它操作（例如根据预定义去创建一个缓冲）。
+现在一个源文件加进去了，我们可以让preprocessor对其进入预编译，之后我们可以得到token:
 Token Tok;
 do {
   pp.Lex(Tok);  // read one token
@@ -82,8 +82,8 @@ do {
   pp.DumpToken(Tok);  // outputs to cerr
   cerr << endl;
 } while (Tok.isNot(tok::eof)); 
-See tut02_pp.cpp for the complete program. Note that this is a very complete preprocessor, it handles all kinds of corner cases correctly already. It also strips comments. The program can be compiled exactly liketut01.
-After building, play around with it a bit. For example, here’s its output when input01.c is given as an input file:
+请完整地看完tut02_pp.cpp。请注意：这是一个完成度非常高的预编译器，已经能够正确处理各种情况了（各种弯弯角角都能处理!!）也能将注释从源代码中剥离出来。这个程序是可以编译完全的，跟tut01一样。
+编译完了之后，我们可以来玩玩看了。比如：现在我们将input01.c作为输入文件：
 $ ./tut02 input01.c 
 typedef 'typedef'
 char 'char'
