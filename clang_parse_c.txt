@@ -135,7 +135,6 @@ input03.c:1:10: error: 'stdio.h' file not found
 InitHeaderSearch init(headers);
 init.AddDefaultSystemIncludePaths(opts);
 init.Realize();  // this actually sends the header list to HeaderSearch 
-With this tiny change, #include directives that include system headers do already work. See tut03_pp.cppfor the complete program.
 通过这些小小的变化 #included 一些系统文件是能够工作的了。让我们来看看完整的tut03_pp.cpp。
 $ ./tut03 input03.c
 # ... lots of output omitted
