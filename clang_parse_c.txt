@@ -118,6 +118,7 @@ semi ';'
 r_brace '}'
 eof '' 
 Note the typedef char* __builtin_va_list; that gets added through the predefine buffer. Also note the nicely formatted warning message TextDiagnostics gives us for free. You can also try feeding errorneous programs to tut02. As you’ll see, some errors are detected, while others are not (yet). For example, tryinput02.c.
+注意：
 Tutorial 03: Include files
 If you feed something with an #include line into our program, chances are that it does not work. For example, if we feed it input03.c, we get an error:
 $ ./tut02 input03.c 
