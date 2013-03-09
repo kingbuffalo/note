@@ -153,15 +153,15 @@ semi ';'
 r_brace '}'
 eof '' 
 这个....也把include文件里的tokens也给分析了，所以输出也挺长的。
-转折词（昵玛，没事干嘛转折）你也有可能得到以下面相类似的warnings。
+不过，你也有可能得到以下面相类似的warnings。
 /usr/include/sys/cdefs.h:137:29: warning: "__MWERKS__" is not defined, evaluates to 0
 #if defined(__MWERKS__) && (__MWERKS__ > 0x2400) 
-While this is a valid warning, gcc or command-line clang do not print it by default. To suppress this warning, I have added a line to PPContext.h that tells clang to ignore this kind of warning.
-
-With some effort, it is possible to turn this into a “real” preprocessor. SeeDriver/PrintPreprocessedOutput.cpp in clang’s source for how this could be done. (XXX: link clang sources to their declarations in clang’s websvn)
-Tutorial 04: Parsing the file
-The preprocessor gives us a stream of tokens. We could now write a parser that parses that token stream into an AST. Luckily, clang can do this for us. However, clang decouples the parser from AST construction, meaning that you can use the parser, but not use clang’s AST.
+这是一个warning，gcc或者命令行clang黑夜不会将这个信息打印出来。为了不显示这个warning，我们必须在PPContext.h加上一行语句忽视此类warning。
+通过几个功能的实现，这个程序终于看起来像一个“真正的”preprocessor了。你可以去clang的源代码Driver/PrintPreprocessedOutput.cpp去看preprocessor是如何实现的。（XXX:链接到clang的网页svn。。。。。。。。。。什么翻译？？）
+第四部分：解析一个文件。
+preproscess给了我们一个token流，但我们现在还不能写一个parser将那些token流解析以供AST使用。幸运的是，clang可以帮我们去做。但是，clang将parse从AST构造中脱离出来，意味你可以使用parser，但是不能使用clang的AST。
 So, how does clang’s parser work? The constructor of the Parser class takes an object of type Action. Actionis an interface class that has a virtual method for everything that is parsed. For example,ActOnStartOfFunctionDef() is called when the parser parses the start of a function definition. At the time of this writing, there are close to 100 ActOn*() methods which you can override.
+那么，现在让我们来看看clang的parser是如何工作的。
 Nearly all overrides are optional. However, isTypeName() must be specified so that the parser can differentiate XXX.
 Luckily, the class MinimalAction already implements this bit of required minimal semantic checking for us, so we can simply use this. Here’s how the parser is used:
 IdentifierTable tab(context.opts);
