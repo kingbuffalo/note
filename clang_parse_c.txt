@@ -191,13 +191,13 @@ typedef unsigned int u32;  // a typedef
 struct { int a } t;  // 一个struct声明了的变量。a variable that has an anonymous struct as type
 char *(*(**foo [][8])())[];  // 这是什么？请看下面。
 一个声明大致分为两部分：左边：声明类型（比如：const unsigned long int 或者 struct{int a} 。右边：一个变量的名字（这里有不会翻译的，干脆不翻。。）（比如：b, *i 或者 *(*(**foo [][8])())[]).左边代表的是clang的声明（潜在的复杂）右边是个声明名字的列表。一个DeclaraorChunk可以是一个指针，引用，数组或者是函数。
-As explained here (go read it!), the last declarator above has this type:
-foo is array of array of 8 pointer to pointer to function returning pointer to array of pointer to char
-Accordingly, the DeclaratorChunk passed to our callback has a list of DeclaratorChunks that contain, in that order, the following Kinds: Array, Array, Pointer, Pointer, Pointer, Function, Pointer, Array, Pointer. Each of the chunks contains more information (e.g. the array size for Array chunks).
-Since we want to detect global variables, we need to skip Declarators whose first DeclaratorChunk has KindFunction. Luckily, DeclaratorChunk has the method isFunctionDeclarator() which does this check, so we can use that.
-Furthermore, we’re only interested in declarations at file scope (as opposed to, say, function parameters or local declarations). To check this, Declarator offers the getContext() function, which returns FileContextfor declarators at file scope.
-We are not interested in declarators that start with typedef or extern (we’re looking for definition of globals, not their declaration). As typedef and extern belong the the “left” part of a declarator, information about them is stored in the declarator’s DeclSpec.
-Finally, we are not interested in globals from system headers. To check for this, we need to know which file the declarator was found in. clang uses the class SourceLocation to represent this information. Since there are lots of SourceLocations (every identifier needs to store where it is from, for example), some effort has been done to make SourceLocation small — it’s only 32 bit, as small as an int. As a result, a SourceLocationalone cannot tell you much, you also need a SourceManager, which works together with SourceLocation for full-featured file identification. SourceManager has a method isInSystemHeader(loc) that we can use. (XXX: difference between file ids and macro ids.)
+就像解释那里那样，最后一个声明它是这样的：
+foo 是一个数组一个有8个指向函数（返回一个指向字符串数组）的数组。
+所以，那 DeclaratorChunk传递给我们回调有一个列表，其中包括DeclaratorChunks的信息：数组，数组，指针，指针，指针，函数，指针，数组，指针（根据那个顺序）（什么顺序？？）当然，那些信息是比较多的（比如：在Array块那里会有array的大小）
+因为我们想要检测全局变量，所以我们需要跳过那些声明中DeclaratoChunk有KindFunction的。还好，DeclaratorChunk中有一个函数isFunctionDeclarator()可以进行这个检测。
+另外：我们只对那些全局变量有兴趣（就像之前讲的函数或者局部变量，是不感兴趣的）要检查这些，Declarator提供一个getContext()的函数。这个函数返回文件范围内的FileContext
+我们对由typedef和extern开始的声明没有兴趣（因为我们对声明的定义没有兴趣）因为typedef和extern是属于左边的，有关它们的信息是保存在declartor的DeclSpec.
+还有一个，我们不需要关心系统头文件的全局变量。为了判断这个，我们需要知道这个变量的声明所在文件是什么。clang使用SourceLocation这个类来获取这些信息。因为有很多的地方我们会使用到SourceLocations(因为每个声明都需要保存它是从哪里来的）我们可以做点东西，让SourceLocation的数据量小一点：只有32位数据跟int一样大。当然，做了优化之后，你从中获取信息也没有那么多了。同时，你还需要一个SourceManager。这个是用来收集所有文件id所有信息的。我们可以使用SourceManager有一个方法isInSystemHeader(loc)，（提示：file ids跟 macro ids 是不一样的。）
 SourceLocations, oh my!
 Macro- vs FileIDs, physical vs logical locations, validity, include loc
 file id: part index into buffer list (14 bit), part index into that buffer (17 bit)
