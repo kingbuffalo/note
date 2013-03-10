@@ -160,15 +160,14 @@ eof ''
 通过几个功能的实现，这个程序终于看起来像一个“真正的”preprocessor了。你可以去clang的源代码Driver/PrintPreprocessedOutput.cpp去看preprocessor是如何实现的。（XXX:链接到clang的网页svn。。。。。。。。。。什么翻译？？）
 第四部分：解析一个文件。
 preproscess给了我们一个token流，但我们现在还不能写一个parser将那些token流解析以供AST使用。幸运的是，clang可以帮我们去做。但是，clang将parse从AST构造中脱离出来，意味你可以使用parser，但是不能使用clang的AST。
-So, how does clang’s parser work? The constructor of the Parser class takes an object of type Action. Actionis an interface class that has a virtual method for everything that is parsed. For example,ActOnStartOfFunctionDef() is called when the parser parses the start of a function definition. At the time of this writing, there are close to 100 ActOn*() methods which you can override.
-那么，现在让我们来看看clang的parser是如何工作的。
-Nearly all overrides are optional. However, isTypeName() must be specified so that the parser can differentiate XXX.
-Luckily, the class MinimalAction already implements this bit of required minimal semantic checking for us, so we can simply use this. Here’s how the parser is used:
+那么，现在让我们来看看clang的parser是如何工作的。Parser构造函数需要一个参数：父类为Action的类实例。Actions是一个抽象类，有许多抽象函数的类。举个例子，ActOnStratOfFunctionDef()这个函数会在Parser解析函数定义的时候调用。直到我在写这个教程的时候，这个类有接近100个虚函数你可以用来重载的。
+差不多所有的虚函数都是设置性的函数。但是，isTypeName()是一个特别的函数，在解析的时候会进行不同的xxoo。
+嘿嘿，不过你是幸运的。因为已经有一个MinimalAction类，这个类已经实现了所有必需的语义分析。所以我们在可以很简便地使用这个类。请看下面的代码：
 IdentifierTable tab(context.opts);
 MinimalAction action(tab);
 Parser p(context.pp, action);
 p.ParseTranslationUnit(); 
-That’s actually all we’re going to do in this part. To compile the program, you need to add -lclangParse to the linker flags. See tut04_parse.cpp for the complete program. To make the program slightly less boring, it outputs some statistics about the program it parses (example input is input03.c):
+上面的那些代码就是我们这一部分要讲的实际上的全部内容了。为了编译这个程序，你需要在链招接那部分加上 -lclangParse。请阅读tut04_parse.cpp的完整代码。为了演示这个程序看起来更简单明了，它将输出程序解析（以input03.c作为输入）的一些统计数据。
 $ ./tut04 input03.c
 
 *** Identifier Table Stats:
@@ -180,18 +179,18 @@ Max identifier length: 28
 
 Number of memory regions: 1
 Bytes allocated: 1901 
-Tutorial 05: Doing something interesting
-By now, we can do some actual analysis of the input code. Remember, we want to write a program that lists information about global variables. Finding all globals in a program is a good start. One possible approach is to use the parser for this.
-Every time the parser finds a declarator, the parser calls ActOnDeclarator() on the action object. Thus, we override this method in our own subclass of MinimalAction.
-What is a declarator? It is a C statement that declares something — a variable, a function, a struct, a typedef. Here are some examples of declarators:
-const unsigned long int b;  // b is just a constant
-int *i;  // declares (and defines) a pointer-to-int variable
-extern int a;  //declares an int variable
-void printf(const char* c, ...);  // a function prototype
+第五部分：让我们来做点有意思的事情吧。
+现在，我们可以做一些有实际意义的代码分析了。还记得我们的目标么，我们想要写一个程序列出所有的全局变量的信息。让我们从找到所有全局变量开始吧，而在parse阶段，我们能做到这个。
+第次当parser找到一个声明的时候，parser会调用ActOnDeclarator()这个函数。所以我们需要在MinimalAction的子类重载这个函数。
+什么是声明，在c语言中下面几个是声明：一个变量，一个函数。一个结构，一个typedef。下面的代码是声明的例子。
+const unsigned long int b;  //b是一个恒量。 
+int *i;  // 声明一个指向int的指针变量。
+extern int a;  //声明一个int 变量。
+void printf(const char* c, ...);  // 一个函数的声明
 typedef unsigned int u32;  // a typedef
-struct { int a } t;  // a variable that has an anonymous struct as type
-char *(*(**foo [][8])())[];  // ...wtf? see below :-) 
-A declaration has very roughly two parts: the declared type on the left (e.g. const unsigned long int orstruct { int a }) and a list of “modifiers” and the variable name itself on the right (e.g. b, *i, or *(*(**foo [][8])())[]). The part on the left is represented by a DeclSpec in clang, the (potentially complex) part on the right is a list of DeclaratorChunks. A DeclaratorChunk has a Kind that can be one of Pointer, Reference,Array, or Function.
+struct { int a } t;  // 一个struct声明了的变量。a variable that has an anonymous struct as type
+char *(*(**foo [][8])())[];  // 这是什么？请看下面。
+一个声明大致分为两部分：左边：声明类型（比如：const unsigned long int 或者 struct{int a} 。右边：一个变量的名字（这里有不会翻译的，干脆不翻。。）（比如：b, *i 或者 *(*(**foo [][8])())[]).左边代表的是clang的声明（潜在的复杂）右边是个声明名字的列表。一个DeclaraorChunk可以是一个指针，引用，数组或者是函数。
 As explained here (go read it!), the last declarator above has this type:
 foo is array of array of 8 pointer to pointer to function returning pointer to array of pointer to char
 Accordingly, the DeclaratorChunk passed to our callback has a list of DeclaratorChunks that contain, in that order, the following Kinds: Array, Array, Pointer, Pointer, Pointer, Function, Pointer, Array, Pointer. Each of the chunks contains more information (e.g. the array size for Array chunks).
