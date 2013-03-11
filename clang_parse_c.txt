@@ -198,11 +198,13 @@ foo 是一个数组一个有8个指向函数（返回一个指向字符串数组
 另外：我们只对那些全局变量有兴趣（就像之前讲的函数或者局部变量，是不感兴趣的）要检查这些，Declarator提供一个getContext()的函数。这个函数返回文件范围内的FileContext
 我们对由typedef和extern开始的声明没有兴趣（因为我们对声明的定义没有兴趣）因为typedef和extern是属于左边的，有关它们的信息是保存在declartor的DeclSpec.
 还有一个，我们不需要关心系统头文件的全局变量。为了判断这个，我们需要知道这个变量的声明所在文件是什么。clang使用SourceLocation这个类来获取这些信息。因为有很多的地方我们会使用到SourceLocations(因为每个声明都需要保存它是从哪里来的）我们可以做点东西，让SourceLocation的数据量小一点：只有32位数据跟int一样大。当然，做了优化之后，你从中获取信息也没有那么多了。同时，你还需要一个SourceManager。这个是用来收集所有文件id所有信息的。我们可以使用SourceManager有一个方法isInSystemHeader(loc)，（提示：file ids跟 macro ids 是不一样的。）
-SourceLocations, oh my!
-Macro- vs FileIDs, physical vs logical locations, validity, include loc
-file id: part index into buffer list (14 bit), part index into that buffer (17 bit)
-macro id: 20 bit macro id, 9 bit physical offset (signed!), 2 bit unused
+SourceLocations, .....(翻个屁!!);
+下面是一些信息的对比。
+Macro- : FileIDs, 物理 跟 逻辑 地址。 合法性， 包含目录.
+file id: 一部分是缓冲列表位置（14位）一部分是缓冲的位置（17位）
+macro id: 20位的macro id 9位是物理位置偏移量（只正不负）。2位是来用的
 the 20 bit refer to a struct that has a virtual loc, a file loc that specifies where the macro is expanded, and a physical loc, a file loc that specifies where the character data for the tokens came from.
+20位的
 Perhaps a few words about MemoryBuffers?
 File locations are both pysical and logical at the same time
 Macro physical locs need the physical offset from the macro loc
