@@ -168,6 +168,7 @@ MinimalAction action(tab);
 Parser p(context.pp, action);
 p.ParseTranslationUnit(); 
 上面的那些代码就是我们这一部分要讲的实际上的全部内容了。为了编译这个程序，你需要在链招接那部分加上 -lclangParse。请阅读tut04_parse.cpp的完整代码。为了演示这个程序看起来更简单明了，它将输出程序解析（以input03.c作为输入）的一些统计数据。
+//下面是程序输出
 $ ./tut04 input03.c
 
 *** Identifier Table Stats:
