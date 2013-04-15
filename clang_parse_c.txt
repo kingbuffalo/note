@@ -204,14 +204,14 @@ SourceLocations, .....(翻个屁!!);
 Macro- : FileIDs, 物理 跟 逻辑 地址。 合法性， 包含目录.
 file id: 一部分是缓冲列表位置（14位）一部分是缓冲的位置（17位）
 macro id: 20位的macro id 9位是物理位置偏移量（只正不负）。2位是来用的
-the 20 bit refer to a struct that has a virtual loc, a file loc that specifies where the macro is expanded, and a physical loc, a file loc that specifies where the character data for the tokens came from.
-20位的
-Perhaps a few words about MemoryBuffers?
-File locations are both pysical and logical at the same time
-Macro physical locs need the physical offset from the macro loc
-logical: subject to #line.<- not true!
+20位存储的数据是一个结构的虚拟地址（指向宏展开后在文件中的位置）和一个物理地址（指向从哪个token产出后的字符数据）
+好像要解释一下什么叫MemoryBuffers了。
+文件地址是同时存在有物理和逻辑地址的。
+宏的物理地址需要那个文件地址再加上宏的位置。
+logical: subject to #line.<- not true!  逻辑上来说（昵玛，这个怎么翻译）
 Defined in a file vs defined in a macro. Linked chain? Comment in SourceManager.h is flat out wrong. Logical/physical not about \#line, but about macro substitutions. Logical is where the macro is in the file, physical is where in the macro definition stuff happens (?). /// MacroIDInfo - Macro SourceLocations refer to these records by their ID. /// Each MacroIDInfo encodes the Instantiation location - where the macro was /// instantiated, and the PhysicalLoc - where the actual character data for /// the token came from. An actual macro SourceLocation stores deltas from /// these positions. That seems to be right. Somewhere else: Physical is were the token comes from, virt where it should come from.
-All in all, our ActOnDeclarator() method looks like this:
+定义一个文件 VS 定义一个宏。连接链？注释在sourceManager.h是错误的(这是神马？？）逻辑/物理不是\#line，而是宏定义。逻辑位置是宏定义所在的文件上的位置。物理位置是宏定义产生作用的地方。//MacroIdInfo，Macro SourceLocations 通过他们的id指向记录。///每一个MacroIdInfo压缩了了最初始的位置（定义的地方）上面的文字不翻译了，说实话是不会翻译，不知道讲的是什么，只是大概知道在讲宏的逻辑物理位置。
+综上所述，我们的ActOnDeclarator() 会是这样的。
 virtual Action::DeclTy *
 ActOnDeclarator(Scope *S, Declarator &D, DeclTy *LastInGroup) {
   const DeclSpec& DS = D.getDeclSpec();
@@ -227,8 +227,8 @@ ActOnDeclarator(Scope *S, Declarator &D, DeclTy *LastInGroup) {
   }
   return MinimalAction::ActOnDeclarator(S, D, LastInGroup);
 } 
-DeclTy is just a typedef for void. Every Action can decide how it wants to represent declarations. We use whatever MinimalAction uses. The only parameter that is interesting to us is Declarator &D.
-The complete program is tut05_parse.cpp. Here’s its output for input04.c:
+DeclTy是一个void的别名。每一个Action可以决定如何描述一个声明。我们使用的是MinimalAction 使用的。这时，我们只需要使用到一个参数： Declarator &D.
+完整的代码在tut05_parse.cpp 。下面是运行结果(将input04.c作为输入文件)
 Found global user declarator a
 Found global user declarator a
 Found global user declarator b
@@ -239,13 +239,13 @@ Found global user declarator fp3
 Found global user declarator f
 Found global user declarator f2
 Found global user declarator t 
-The program works well, but it has a few quirks. Once, it believes that f and f2are globals, when they are really just function declarations. With the words ofEli Friedman, from clang’s excellent and very helpful mailing list:
-Fundamentally, in C, it’s impossible to tell apart a global function declaration and a global variable declaration without resolving typedefs and __typeof expressions. Since that’s beyond the scope of the parser, you’ll either need to use Sema, do these yourself, or be a bit conservative about printing out things that aren’t actually globals.
-Examples of function declarations without an explicit type declarator:
+这个程序可以完美地运行，只是有点小bug：他会将f 和 f2 认为是全局变量（而实际上这两个是函数来的。引用xxx的话（从clang中很同色而且很有帮助的邮件列表：）
+从功能上来讲，在c语言中，不太可能将一个全局函数声明和一个全局变量区分出来（在没有使用typedef和__type类型的表达式时）。因为这个功能不是在parser阶段能做的，你需要使用Sema，自己做这些，还是有点保守，打印出来的东西，实际上不是全局。
+举个一个没有明确类型声明的函数声明。
 typedef int x();
 x z;
 __typeof(z) r; 
-We will fix this problem in the next part.
+在下一部分中，我们将会解决这个问题。
 Also note that this does not find statics local to functions (which are globals, too). We won’t fix this in the tutorial, but it’s not too hard to do if you want to give it a shot.
 Tutorial 06: Doing semantic analysis with clang
 To differentiate variable declarations from function prototypes, we need to do semantic analysis. Again, clang can do this for us. Its Sema library is basically just an Action object that is passed to the parser. However, all this happens behind the scenes.
