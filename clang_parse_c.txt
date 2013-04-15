@@ -246,8 +246,9 @@ typedef int x();
 x z;
 __typeof(z) r; 
 在下一部分中，我们将会解决这个问题。
-Also note that this does not find statics local to functions (which are globals, too). We won’t fix this in the tutorial, but it’s not too hard to do if you want to give it a shot.
+请注意，这部分讲的内容并不能找出静态的局部函数（实际上也是全局函数）。我们不在这里解决。不过别担心，这个不难的。
 Tutorial 06: Doing semantic analysis with clang
+
 To differentiate variable declarations from function prototypes, we need to do semantic analysis. Again, clang can do this for us. Its Sema library is basically just an Action object that is passed to the parser. However, all this happens behind the scenes.
 The interface to Sema is very minimalistic: It’s just a single function, ParseAST(). This function takes aPreprocessor object and an ASTConsumer. Behind the scenes, that function builds a Parser object and passes it an Action that does the semantic analysis. This Action builds an AST while doing this.
 We can now get rid of our MyAction. Instead, we do now need an ASTConsumer, which you can think of as anAction for Sema. The method we want to override is HandleTopLevelDecl(), which is called (surprise!) for every top-level declaration. The method gets passed a Decl object, which is the AST class used for declarations. HandleTopLevelDecl() has a minor quirk: if a declaration contains multiple variables (e.g. int a, b;), it is called only once, and the Decl that’s passed in is a linked list that you need to walk (this will be changed to something more sane in the future, though).
