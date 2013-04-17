@@ -277,11 +277,11 @@ Read top-level variable decl: 't'
 Observe that f and f2 are now correctly omitted.
 很明显，f和f2被正确地删去（应该 翻译得不对。。，故保留）
 我们的程序现在可以正确地运行一个真实的代码了(而且代码在50行之内），但它的接口并不是，让我们来解决一下吧。
-Tutorial 07: Support for real programs
-Compiling “real” source files usually requires that several flags are passed to the compiler. Flags that are commonly used are -I to add directories to the include file search path, and -D to define macros at the command line.
-If we make our program compatible to the flags that are used by common C compilers, then we can analyze existing programs simply by changing the compiler. Hence, we’ll add support for -I and -D to our program.
-Furthermore, “real” compilation invocations ususally pass several other flags that are specific to code generation. Those flags are not important to our program. Hence, our program will accept arbitrary flags but will ignore them.
-Adding support for command-line parameters usually requires a fair amount of code. Luckily, we don’t have to write this code: clang belongs to the LLVM project, and LLVM has a very powerful command-line parameter handling library. It also has great documentation, hence I won’t explain it in detail. In short:
+教程7，支持真正的程序。
+编译“真正”的源代码通常需要几个标记传给编译器。标记一般是在命令行中用-I来增加包含文件目录，-D来定义宏。
+如果我们要兼容常见的C编译器所使用的标志，我们就可以通过改变编译器分析现在的程序。所以，我们要增加-l和-D标志。
+另外，“真正"的编译器还会接收其它的标志，特别是在代码生成那块。这些标志对于我们写的程序来说，并不重要。所以，我们的程序会接受任何的标志，但是并不处理它们。
+增加对命令行参数的支持通常需要不少的代码量。幸运的是，我们并不需要写那些代码：clang是llvm的一部分，而llvm有一个强大的处理命令行参数的库。而且llvm也有大量的文档，所以，我并不会详细解释。总之：
 XXX
 Code necessary to implement -I (easy) and -D (currently harder than it should be). Slurp rest, need special-case slurper for -o.
 Vim:
