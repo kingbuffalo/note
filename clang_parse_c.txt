@@ -247,20 +247,19 @@ x z;
 __typeof(z) r; 
 在下一部分中，我们将会解决这个问题。
 请注意，这部分讲的内容并不能找出静态的局部函数（实际上也是全局函数）。我们不在这里解决。不过别担心，这个不难的。
-Tutorial 06: Doing semantic analysis with clang
-
-To differentiate variable declarations from function prototypes, we need to do semantic analysis. Again, clang can do this for us. Its Sema library is basically just an Action object that is passed to the parser. However, all this happens behind the scenes.
-The interface to Sema is very minimalistic: It’s just a single function, ParseAST(). This function takes aPreprocessor object and an ASTConsumer. Behind the scenes, that function builds a Parser object and passes it an Action that does the semantic analysis. This Action builds an AST while doing this.
-We can now get rid of our MyAction. Instead, we do now need an ASTConsumer, which you can think of as anAction for Sema. The method we want to override is HandleTopLevelDecl(), which is called (surprise!) for every top-level declaration. The method gets passed a Decl object, which is the AST class used for declarations. HandleTopLevelDecl() has a minor quirk: if a declaration contains multiple variables (e.g. int a, b;), it is called only once, and the Decl that’s passed in is a linked list that you need to walk (this will be changed to something more sane in the future, though).
-We want to handle only VarDecls, and only those that are global and not extern. This yields
+第六部分：用clang进行语法分析。
+为了区分变量的声明和函数原型的不同，我们需要进行语法分析。同样，clang已经帮我们做好了。clang的sema库基本上只是一个Action对象传给解析器。而且，所有的这些都是在幕后处理的。
+sema的接口是非常简约的：一个函数：ParseAST().这个函数需要一个Preprocessor对象和一个ASTConsumer.在后台，这个函数会创建一个Parser对象并将这个对象传递给一个Action，而去做一个语义分析。这样：Action会进行AST分析。
+现在，我们不需要使用MyAction.而是，我们将使用ASTConsumer，这个东西么，就像Sema的Action一样。 我们需要重载的方法是HandleTopLevelDecl(),这个函数会在每个顶级声明的时候调用。这个方法会返回一个Decl对象，这个对象在AST类中用来声明的。HandleTopLevelDecl()有一个小怪异：如果声明包含有多个变量（比如：int a, b;),这个函数只会调用一次。返回的Decl将会是一个链表，你需要遍历去取得每个值（虽然，这在将来会改得更加智能）
+我们只处理变量声明，而且只是全局变量声明，所以代码会如下写：
 if (VarDecl *VD = dyn_cast<VarDecl>(D)) {
   for (; VD; VD = cast_or_null<VarDecl>(VD->getNextDeclarator())) {
     if (VD->isFileVarDecl() && VD->getStorageClass() != VarDecl::Extern)
       cerr << "Read top-level variable decl: '" << VD->getName() << "'\n";
   }
 } 
-Note that this is much simpler than what we did in the last part — and it’s more correct too. Yay.
-Our new program is shown in tut06_sema.cpp. ParseAST() also calls EnterMainSourceFile() on the preprocessor. So don’t call this yourself, else you get errors about duplicate definitions (because the main source file is entered twice into the pp’s file list), such as
+这个是我们所做的事情中的最后一件事情，是不是比前面的要简单得多，并且它是正确的。耶。
+我们的程序会在tut06_sema.cpp  ParseAST()这个函数会在Preprocess的EnterMainSourceFile()函数中调用。所以你并不需要去调用它，否则的话，你会得到一个重复定义的错误（因为主文件会进入到pp's的文件列表两次）。错误示例如下：
 predefines>:3:15: error: redefinition of '__builtin_va_list'
 typedef char* __builtin_va_list;
               ^
@@ -276,7 +275,8 @@ Read top-level variable decl: 'fp2'
 Read top-level variable decl: 'fp3'
 Read top-level variable decl: 't' 
 Observe that f and f2 are now correctly omitted.
-Our program is now already good enough to handle real-life code (and we’re still well below 50 lines), but it’s interface is not. Let’s tackle this next.
+很明显，f和f2被正确地删去（应该 翻译得不对。。，故保留）
+我们的程序现在可以正确地运行一个真实的代码了(而且代码在50行之内），但它的接口并不是，让我们来解决一下吧。
 Tutorial 07: Support for real programs
 Compiling “real” source files usually requires that several flags are passed to the compiler. Flags that are commonly used are -I to add directories to the include file search path, and -D to define macros at the command line.
 If we make our program compatible to the flags that are used by common C compilers, then we can analyze existing programs simply by changing the compiler. Hence, we’ll add support for -I and -D to our program.
