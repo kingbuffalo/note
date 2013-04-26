@@ -283,7 +283,7 @@ Observe that f and f2 are now correctly omitted.
 另外，“真正"的编译器还会接收其它的标志，特别是在代码生成那块。这些标志对于我们写的程序来说，并不重要。所以，我们的程序会接受任何的标志，但是并不处理它们。
 增加对命令行参数的支持通常需要不少的代码量。幸运的是，我们并不需要写那些代码：clang是llvm的一部分，而llvm有一个强大的处理命令行参数的库。而且llvm也有大量的文档，所以，我并不会详细解释。总之：
 XXX
-Code necessary to implement -I (easy) and -D (currently harder than it should be). Slurp rest, need special-case slurper for -o.
+代码需要实现-I(容易)和-D(比较困难)另外，需要特殊情况。
 Vim:
 gcc -c -I. -Iproto -DHAVE_CONFIG_H -DFEAT_GUI_MAC -fno-common \
  -fpascal-strings -Wall -Wno-unknown-pragmas -mdynamic-no-pic \
@@ -306,8 +306,8 @@ InputFilename(llvm::cl::Positional, llvm::cl::desc("<input file>"),
 
 static llvm::cl::list<std::string> IgnoredParams(llvm::cl::Sink);
 static llvm::cl::opt<string> dummy("o", llvm::cl::desc("dummy for gcc compat")); 
-Nice output ? — html output
-Also take care of statics and print the name of the declaring file.
+完美输出？输出html
+当然，我们还要留意静态声明，还有就是要打印出声明变量的文件名。
 TranslationUnit contains a whole AST (i.e. all toplevel decls)
 See tut07_sema.cpp, input05.c, input05.html
 Tutorial 08: Working with the AST
