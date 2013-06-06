@@ -20,26 +20,30 @@ static inline size_t sdslen(const sds s){
 }
 
 static inline size_t sdsavail(const sds s){
-	struct sdshdr *sh -= (void *)(s-(sizeof(struct sdshdr)));
+	struct sdshdr *sh = (void *)(s-(sizeof(struct sdshdr)));
 	return sh->free;
 }
 //初始化
 sds sdsnewlen(const void *init, size_t initlen);
-sds sdsnew(const char *init);
+sds sdsnew(const void *init);
 sds sdsempty();
-size_t sdslen(const sds s);
-//复制
-sds sdsdup(const sds s);
-//释放
 void sdsfree(sds s);
-size_t sdsavail(const sds s);
-//扩展
-sds sdsgrowzero(sds s, size_t len);
-sds sdscatlen(sds s, const void *t, size_t len);
 sds sdscat(sds s, const char *t);
-sds sdscatsds(sds s,const sds t);
+sds sdscatlen(sds s, const void *t, size_t len);
+sds sdsMarkeRoomFor(sds s, size_t addlen);
 sds sdscpylen(sds s, const char *t, size_t len);
 sds sdscpy(sds s, const char *t);
+sds sdstrim(sds s, const char *cset);
+sds sdsrange(sds s, int start, int end);
+void sdsupdatelen(sds s);
+sds sdsdup(const sds s);
+int sdscmp(const sds s1, const sds s2);
+void sdstolower(sds s);
+void sdstoupper(sds s);
+/*
+//扩展
+sds sdsgrowzero(sds s, size_t len);
+sds sdscatsds(sds s,const sds t);
 
 sds sdscatvprintf(sds s, const char *fmt, va_list ap);
 #ifndef __GNUC__
@@ -49,11 +53,17 @@ sds sdscatprintf(sds s,const char *fmt, ...)
 sds sdscatprintf(sds s,const char *fmt, ...);
 #endif
 //栽剪：前面和后面都减去字符。
-sds sdstrim(sds s, const char *cset);
-sds sdsrange(sds s, int start, int end);
-void sdsupdatelen(sds s);
 void sdsclear(sds s);
-int sdscmp(const sds s1, const sds s2);
 sds *sdssplitlen(const char *s, int len, const char *sep, int seplen, int *count);
 void sdsfreespliteres(sds *tokens, int count);
+sds sdsfromlonglong(long long value);
+sds sdscatrepr(sds s,const char *p, size_t len);
+sds *sdssplitargs(const char *line, int *argc);
+void sdssplitargs_free(sds *argv, int argc);
+sds sdsmapchars(sds s,const char *from, const char *to, size_t setlen);
 
+void sdsIncrLen(sds s, int incr);
+sds sdsRemoveFreeSpace(sds s);
+size_t sdsAllocSize(sds s);
+*/
+#endif
