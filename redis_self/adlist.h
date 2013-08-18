@@ -41,15 +41,14 @@ list *listCreate(void);
 void listRelease(list *list);
 list *listAddNodeHead(list *list, void *value);
 list *listAddNodeTail(list *list, void *value);
-
-/*
-list *listInsertNode(list *list, listNode *old_node, void *value, int after);
 void listDelNode(list *list, listNode *node);
+list *listInsertNode(list *list, listNode *old_node, void *value, int after);
 listIter *listGenIterator(list *list, int directoin);
 listNode *listNext(listIter *iter);
 void listReleaseIterator(listIter *iter);
 list *listDup(list *orig);
 listNode *listSearchKey(list *list, void *key);
+/*
 listNode *listIndex(list *list, long index);
 void listRewin(list *list, listIter *li);
 void listRewinTail(list *list, listIter *li);
