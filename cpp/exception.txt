@@ -1,0 +1,7 @@
+In c++, the cost depends on the implementation. In general, there are two ways to implement exceptions:
+
+The first is the "table" approach. The compiler builds a set of tables to look up, at the point where the exception is thrown, where to go. When the exception is thrown, it has to search through each table up the call stack until it finds something that will catch this exception. Since this is all runtime based, entering or exiting a try catch produces no penalty (good) but throwing an exception involves potentially many lookups, producing a much slower throw. I personally prefer the not-having-to-pay for try catch blocks, because exceptions should be a very rare circumstance. This also would make executables larger, if they have to store the tables.
+
+The seconds is the "code" approach. Each time the code enters a try catch block, conceptually, the location of the block is pushed onto a stack. This produces a cost during entering and exiting a try-catch block, however, when an exception is thrown, the runtime mechanism can quickly pop off the stack to find where to go. So, throwing exceptions is (much?) faster, but entering a block now has a cost. Putting a try catch block in a tight low level loop could produce significant overhead.
+
+You would have to check your specific compiler to see which one they use.
